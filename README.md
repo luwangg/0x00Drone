@@ -1,5 +1,5 @@
 # 0x00Drone
-A modification to the DJI Mavic Pro used for hacking from the sky and to drop physical backdoors under GNU GPLv3
+A modification to the DJI Mavic Pro used for hacking from the sky and to drop physical backdoors, licensed under GNU GPLv3
 
 # CURRENT STATUS: PROTOTYPE DEVELOPMENT
 ---
