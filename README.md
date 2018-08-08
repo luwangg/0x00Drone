@@ -43,47 +43,33 @@ ricksanchez has obtained firmware for the drone. What this might allow us to do 
 # FAQ
 
 **When will the first prototype be released?**
-[details=]
 > When it is done.
-[/details]
 
 **When will the first prototype be done?**
-[details=]
 > When it is released.
-[/details]
 
 **Will the project be open source?**
-[details=]
 > Of course it will be! You can find us on our Github https://github.com/Phoenix750/0x00Drone
-[/details]
 
 **How does the self destruct work?**
-[details=]
 > Electrolytic capacitors have a constant polarity. If you put a reversed polarity over them, it blows up. The more voltage you put over it and the bigger the capacity of the capacitor, the bigger the boom. Since the SIM card is the only thing that has to be blown up (the SD card of the hacking package is encrypted with LUKS), we tape the capacitor around the external antenna. In case of emergency, we put a high-voltage reverse polarity over the capacitor to blow it up.
-[/details]
 
 **Isn't an exploding capacitor dangerous for injuries?**
-[details=]
 > Yes, but it is still way less harmful than napalm or thermite, which was also an option.
-[/details]
 
 **Who does what?**
-[details=]
 > **Phoenix750** makes the customized hardware and programs the main microcontroller for said hardware.
 
 >**Leeky** is working on the software that is present on the micro-computer and the attacker's device.
 
 >**ricksanchez** keeps himself busy with decoding and modifying the firmware that is already flashed into the drone for our use.
-[/details]
 
 **Can we aid the project?**
-[details=]
 > Of course you can! Here's how:
 > * When we feel confident in making a prototype we will open a crowdfunding campaign. You can donate.
 > * Give ideas for features.
 > * If you have made a modification to our software, please contact one of us and we will have a look if we can merge it.
 > * Cheer us from time to time. Monkeys need motivation to do their tricks ;)
-[/details]
 
 FAQ is still under construction!
 
