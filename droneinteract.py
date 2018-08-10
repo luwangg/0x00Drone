@@ -1,22 +1,31 @@
+#!/usr/bin/env python3
+# coding: utf-8
+
 import sys
 import time
 import threading
+import RPi.GPIO as GPIO
+from collections import deque
 
-if(len(sys.argv)!=2):
-    print("Usage ./droneinteract.py <(a)ttach/(b)eacon/destruct>")
-    exit()
-    
-try:
-    input_ = raw_input
-except NameError:
-    input_ = input
-    
-DESTRUCT = 2 # HIGH = on
-DETACH   = 3 # LOW  = on
-BEACON   = 4 # HIGH = on
+if sys.version_info[0] == 2:
+    input = raw_input
 
-JOB_OK   = 17
-JOB_FAIL = 27
+DESTRUCT_QUESTIONS = [
+    'Do you REALLY want activate the destruction? [y/n] ',
+    'Are you sure? [y/n] ',
+    'Really? [y/n] ',
+]
+
+GPIO_OUTPUT = {
+    'destruct': 2,
+    'detach'  : 3,
+    'beacon'  : 4
+}
+
+GPIO_INPUT = {
+    'JOB_OK'  : 17,
+    'JOB_FAIL': 27
+}
 
 HOLD_TIME = 1 # in seconds
 WAIT_FOR_RESPONSE = 3 # in seconds
@@ -24,117 +33,76 @@ WAIT_FOR_RESPONSE = 3 # in seconds
 RECV_NORESPONSE = 0
 RECV_OK         = 1
 RECV_FAIL       = 2
-    
-    
-def timeout(): pass
 
-def sendCommand(port):
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
 
+deque(map(lambda pin: GPIO.setup(pin, GPIO.INPUT), GPIO_INPUT), 0)
+deque(map(lambda pin: GPIO.setup(pin, GPIO.OUTPUT), GPIO_OUTPUT), 0)
+
+def send_command(port):
     time.sleep(HOLD_TIME)
-    if RPI:
-        GPIO.output(port, GPIO.LOW)
-    else:
-        print("Send command...")
-    return
-        
-        
-def getResponse():
-    alarm = threading.Timer(WAIT_FOR_RESPONSE, timeout)
+    GPIO.output(port, GPIO.LOW)
+    print('Send command...')
+
+def get_response():
+    alarm = threading.Timer(WAIT_FOR_RESPONSE, lambda: None)
     alarm.start()
     received = RECV_NORESPONSE
+
     while alarm.is_alive():
-        if RPI:
-            if(GPIO.input(JOB_OK) == GPIO.HIGH):
-                received = received | RECV_OK
-            if(GPIO.input(RECV_FAIL) == GPIO.HIGH):
-                received = received | RECV_FAIL
+        if GPIO.input(GPIO_INPUT['JOB_OK']) == GPIO.HIGH:
+            received = received | RECV_OK
+
+        if GPIO.input(RECV_FAIL) == GPIO.HIGH:
+            received = received | RECV_FAIL
+    
     alarm.cancel()
-    if not RPI:
-        print("Got Response...")
-    else:
-        if received == RECV_NORESPONSE or received == RECV_OK|RECV_FAIL:
-            print("No response received..")
-            return RECV_NORESPONSE
+    if (received == RECV_NORESPONSE) or (received == RECV_OK | RECV_FAIL):
+        print('No response received..')
+        return RECV_NORESPONSE
+
     return received
-    
-    
-    
-        
+
 def attach():
-    if RPI:
-        GPIO.output(DETACH, GPIO.HIGH)
-    if(getResponse() == RECV_FAIL):
-        print("ERROR: JOB_FAIL RECEIVED")
-    input_('Press Enter to detach ')
-    if RPI:
-        GPIO.output(BEACON, GPIO.LOW)
-     
-    
+    GPIO.output(GPIO_OUTPUT['detach'], GPIO.HIGH)
+
+    if get_response() == RECV_FAIL:
+        print('ERROR: JOB_FAIL RECEIVED')
+
+    input('Press Enter to detach')
+    GPIO.output(GPIO_OUTPUT['beacon'], GPIO.LOW)
+
 def beacon():
-    if RPI:
-        GPIO.output(BEACON, GPIO.HIGH)
-    if(getResponse() == RECV_FAIL):
-        print("ERROR: JOB_FAIL RECEIVED")
-    input_('Press Enter to deactivate the beacon again ')
-    if RPI:
-        GPIO.output(BEACON, GPIO.LOW)
-        
+    GPIO.output(GPIO_OUTPUT['beacon'], GPIO.HIGH)
+
+    if get_response() == RECV_FAIL:
+        print('ERROR: JOB_FAIL RECEIVED')
+
+    input('Press Enter to deactivate the beacon again ')
+    GPIO.output(GPIO_OUTPUT['beacon'], GPIO.LOW)
+
 def destruct():
-    if RPI:
-        GPIO.output(DESTRUCT, GPIO.HIGH)
+    GPIO.output(GPIO_OUTPUT['destruct'], GPIO.HIGH)
     time.sleep(10)
-    
 
-command = sys.argv[1]
-command_function = None
-#if command == "detach" or command == "d":
-#    command_function = detach
-if command == "attach" or command == "a":
-    command_function = attach
-elif command == "beacon" or command == "b":
-    command_function = beacon
-elif command == "destruct":
-    command = "destruct"
-    if not input_('Do you REALLY want activate the destruction? [y/n] ').lower()[0]=='y':
-        print("Aborting..")
-        exit()
-    if not input_('Are you sure? [y/n] ').lower()[0]=='y':
-        print("Aborting..")
-        exit()
-    if not input_('Really? [y/n] ').lower()[0]=='y':
-        print("Aborting..")
-        exit()
-    command_function = destruct
-else:
-    print("Usage ./droneinteract.py <(a)ttach/(b)eacon/destruct>")
-    exit()
+def main(command):
+    command_dict = {
+        'attach'  : attach,
+        'beacon'  : beacon,
+        'destruct': destruct
+    }
 
-try:
-    import RPi.GPIO as GPIO
-    RPI = True
-except:
-    RPI = False
-    print("Running on test system..")
-    
+    if command == 'destruct':
+        if all([input(q) == 'y' for q in DESTRUCT_QUESTIONS]) == False:
+            print('Aborting...')
+            sys.exit()
 
+    command_dict.get(command, sys.exit)()
 
-if RPI:
-    GPIO.setmode(GPIO.BCM)
-    #OUTPUTS
-    GPIO.setup(DESTRUCT, GPIO.OUT)
-    GPIO.setup(DETACH, GPIO.OUT)
-    GPIO.setup(BEACON, GPIO.OUT)
-    #INPUTS
-    GPIO.setup(JOB_OK, GPIO.IN)
-    GPIO.setup(JOB_FAIL, GPIO.IN)
-else:
-    print("Setup..")
-    
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print("Usage ./droneinteract.py <attach/beacon/destruct>")
+        sys.exit()
 
-command_function()
-
-
-if RPI:
-    GPIO.cleanup()
-else:
-    print("Cleanup..")
+    main(sys.argv[1].lower())
