@@ -37,8 +37,8 @@ RECV_FAIL       = 2
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
-deque(map(lambda pin: GPIO.setup(pin, GPIO.INPUT), GPIO_INPUT), 0)
-deque(map(lambda pin: GPIO.setup(pin, GPIO.OUTPUT), GPIO_OUTPUT), 0)
+deque(map(lambda pin: GPIO.setup(pin, GPIO.INPUT), GPIO_INPUT.values()), 0)
+deque(map(lambda pin: GPIO.setup(pin, GPIO.OUTPUT), GPIO_OUTPUT.values()), 0)
 
 def send_command(port):
     time.sleep(HOLD_TIME)
